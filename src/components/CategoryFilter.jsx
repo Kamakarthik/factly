@@ -1,19 +1,19 @@
-function CategoryFilter({ factsData, categoryColors }) {
+function CategoryFilter({ categoryColors }) {
+  const categories = Object.keys(categoryColors);
   return (
     <aside>
       <ul>
         <li className="category">
           <button className="btn btn-all-categories">All</button>
         </li>
-        {factsData.map((fact) => {
-          const bgcolor = categoryColors[fact.category?.trim()] || '6b7280';
+        {categories.map((category) => {
           return (
-            <li className="category">
+            <li className="category" key={category}>
               <button
                 className="btn btn-category"
-                style={{ backgroundColor: `#${bgcolor}` }}
+                style={{ backgroundColor: `#${categoryColors[category]}` }}
               >
-                {fact.category}
+                {category}
               </button>
             </li>
           );
