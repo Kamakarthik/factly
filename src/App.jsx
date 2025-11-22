@@ -1,35 +1,65 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import supabase from './supabase';
+import { useState, useEffect } from 'react';
+import CategoryFilter from './components/CategoryFilter';
+import FactForm from './components/FactForm';
+import FactList from './components/FactList';
+import './index.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [facts, setFacts] = useState([]);
+  const [categoryColors, setCategoryColors] = useState({});
+
+  useEffect(() => {
+    const loadData = async () => {
+      // Fetch facts
+      const { data: factsData, error: factsError } = await supabase
+        .from('facts')
+        .select('*');
+      if (!factsError) setFacts(factsData);
+
+      // Fetch categories with colors
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('category, colour');
+
+      if (!categoriesError) {
+        // Create a mapping object:{"technology":"3b82f6"..}
+        const colorMap = {};
+        categoriesData.forEach((cat) => {
+          // Trim whitespace from category and color values
+          const cleanCategory = cat.category.trim();
+          const cleanColor = cat.colour.trim();
+          colorMap[cleanCategory] = cleanColor;
+        });
+        setCategoryColors(colorMap);
+      }
+    };
+
+    loadData();
+  }, []);
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <header className="header">
+        <div className="logo">
+          <img
+            src="logo.png"
+            height="68"
+            width="68"
+            alt="Today I Learned Logo"
+          />
+          <h1>Factly</h1>
+        </div>
+
+        <button className="btn btn-large btn-open">Share a fact</button>
+      </header>
+      <FactForm />
+      <main className="main">
+        <CategoryFilter />
+        <FactList factsData={facts} categoryColors={categoryColors} />
+      </main>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
