@@ -1,10 +1,15 @@
-function CategoryFilter({ categoryColors }) {
+function CategoryFilter({ setCurrentCategory, categoryColors }) {
   const categories = Object.keys(categoryColors);
   return (
     <aside>
       <ul>
         <li className="category">
-          <button className="btn btn-all-categories">All</button>
+          <button
+            className="btn btn-all-categories"
+            onClick={() => setCurrentCategory('all')}
+          >
+            All
+          </button>
         </li>
         {categories.map((category) => {
           return (
@@ -12,8 +17,9 @@ function CategoryFilter({ categoryColors }) {
               <button
                 className="btn btn-category"
                 style={{ backgroundColor: `#${categoryColors[category]}` }}
+                onClick={() => setCurrentCategory(category)}
               >
-                {category}
+                {category.toUpperCase()}
               </button>
             </li>
           );
