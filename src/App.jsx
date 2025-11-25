@@ -1,62 +1,43 @@
-import supabase from './supabase';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useFacts } from './hooks/useFacts';
+import { useCategories } from './hooks/useCategories';
 import CategoryFilter from './components/CategoryFilter';
 import FactForm from './components/FactForm';
 import FactList from './components/FactList';
+import Header from './components/Header';
+import { PacmanLoader } from 'react-spinners';
 import './index.css';
 
 function App() {
-  const [facts, setFacts] = useState([]);
-  const [categoryColors, setCategoryColors] = useState({});
-
-  useEffect(() => {
-    const loadData = async () => {
-      // Fetch facts
-      const { data: factsData, error: factsError } = await supabase
-        .from('facts')
-        .select('*');
-      if (!factsError) setFacts(factsData);
-
-      // Fetch categories with colors
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('categories')
-        .select('category, colour');
-
-      if (!categoriesError) {
-        // Create a mapping object:{"technology":"3b82f6"..}
-        const colorMap = {};
-        categoriesData.forEach((cat) => {
-          // Trim whitespace from category and color values
-          const cleanCategory = cat.category.trim();
-          const cleanColor = cat.colour.trim();
-          colorMap[cleanCategory] = cleanColor;
-        });
-        setCategoryColors(colorMap);
-      }
-    };
-
-    loadData();
-  }, []);
+  const [currentCategory, setCurrentCategory] = useState('all');
+  const { facts, setFacts, isLoading, loadMoreFacts, hasMore } =
+    useFacts(currentCategory);
+  const categoryColors = useCategories();
+  const [showForm, setShowForm] = useState(false);
 
   return (
     <>
-      <header className="header">
-        <div className="logo">
-          <img
-            src="logo.png"
-            height="68"
-            width="68"
-            alt="Today I Learned Logo"
-          />
-          <h1>Factly</h1>
-        </div>
-
-        <button className="btn btn-large btn-open">Share a fact</button>
-      </header>
-      <FactForm />
+      <Header showForm={showForm} setShowForm={setShowForm} />
+      {showForm ? (
+        <FactForm
+          setFacts={setFacts}
+          setShowForm={setShowForm}
+          categoryColors={categoryColors}
+        />
+      ) : null}
       <main className="main">
-        <CategoryFilter />
-        <FactList factsData={facts} categoryColors={categoryColors} />
+        <CategoryFilter
+          setCurrentCategory={setCurrentCategory}
+          categoryColors={categoryColors}
+        />
+        <FactList
+          factsData={facts}
+          setFacts={setFacts}
+          categoryColors={categoryColors}
+          loadMoreFacts={loadMoreFacts}
+          hasMore={hasMore}
+          isLoading={isLoading}
+        />
       </main>
     </>
   );
