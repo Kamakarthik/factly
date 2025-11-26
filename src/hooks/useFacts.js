@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import supabase from '../supabase';
 
-export const useFacts = (currentCategory) => {
+export const useFacts = (currentCategory, sortBy = 'interesting') => {
   const [facts, setFacts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -14,7 +14,7 @@ export const useFacts = (currentCategory) => {
     setFacts([]);
     setPage(0);
     setHasMore(true);
-  }, [currentCategory]);
+  }, [currentCategory, sortBy]);
 
   // Load initial facts when category changes
   useEffect(() => {
@@ -24,13 +24,35 @@ export const useFacts = (currentCategory) => {
       setIsLoading(true);
 
       let query = supabase.from('facts').select('*');
+
       if (currentCategory !== 'all') {
         query = query.eq('category', currentCategory);
       }
 
-      const { data: factsData, error: factsError } = await query
-        .order('votesInteresting', { ascending: false })
-        .range(0, FACTS_PER_PAGE - 1);
+      switch (sortBy) {
+        case 'recent':
+          query = query.order('created_at', { ascending: false });
+          break;
+        case 'oldest':
+          query = query.order('created_at', { ascending: true });
+          break;
+        case 'interesting':
+          query = query.order('votesInteresting', { ascending: false });
+          break;
+        case 'mindblowing':
+          query = query.order('votesMindBlowing', { ascending: false });
+          break;
+        case 'false':
+          query = query.order('votesFalse', { ascending: false });
+          break;
+        default:
+          query = query.order('votesInteresting', { ascending: false });
+      }
+
+      const { data: factsData, error: factsError } = await query.range(
+        0,
+        FACTS_PER_PAGE - 1
+      );
 
       if (isMounted) {
         if (!factsError && factsData) {
@@ -48,7 +70,7 @@ export const useFacts = (currentCategory) => {
     return () => {
       isMounted = false;
     };
-  }, [currentCategory]);
+  }, [currentCategory, sortBy]);
 
   // Load more facts when user calls loadMoreFacts
   const loadMoreFacts = useCallback(async () => {
@@ -59,14 +81,36 @@ export const useFacts = (currentCategory) => {
     setIsLoading(true);
 
     let query = supabase.from('facts').select('*');
+
     if (currentCategory !== 'all') {
       query = query.eq('category', currentCategory);
     }
 
+    switch (sortBy) {
+      case 'recent':
+        query = query.order('created_at', { ascending: false });
+        break;
+      case 'oldest':
+        query = query.order('created_at', { ascending: true });
+        break;
+      case 'interesting':
+        query = query.order('votesInteresting', { ascending: false });
+        break;
+      case 'mindblowing':
+        query = query.order('votesMindBlowing', { ascending: false });
+        break;
+      case 'false':
+        query = query.order('votesFalse', { ascending: false });
+        break;
+      default:
+        query = query.order('votesInteresting', { ascending: false });
+    }
+
     const nextPage = page + 1;
-    const { data: factsData, error: factsError } = await query
-      .order('votesInteresting', { ascending: false })
-      .range(nextPage * FACTS_PER_PAGE, (nextPage + 1) * FACTS_PER_PAGE - 1);
+    const { data: factsData, error: factsError } = await query.range(
+      nextPage * FACTS_PER_PAGE,
+      (nextPage + 1) * FACTS_PER_PAGE - 1
+    );
 
     if (!factsError && factsData) {
       // Append only new facts to avoid duplicates (prevents duplicate keys and re-mounts)
@@ -82,7 +126,7 @@ export const useFacts = (currentCategory) => {
     }
 
     setIsLoading(false);
-  }, [page, isLoading, hasMore, currentCategory]);
+  }, [page, isLoading, hasMore, currentCategory, sortBy]);
 
   return { facts, setFacts, isLoading, loadMoreFacts, hasMore };
 };
