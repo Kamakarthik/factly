@@ -5,13 +5,17 @@ import CategoryFilter from './components/CategoryFilter';
 import FactForm from './components/FactForm';
 import FactList from './components/FactList';
 import Header from './components/Header';
+import { SortBy } from './components/SortBy';
 import { PacmanLoader } from 'react-spinners';
 import './index.css';
 
 function App() {
   const [currentCategory, setCurrentCategory] = useState('all');
-  const { facts, setFacts, isLoading, loadMoreFacts, hasMore } =
-    useFacts(currentCategory);
+  const [sortBy, setSortBy] = useState('interesting');
+  const { facts, setFacts, isLoading, loadMoreFacts, hasMore } = useFacts(
+    currentCategory,
+    sortBy
+  );
   const categoryColors = useCategories();
   const [showForm, setShowForm] = useState(false);
 
@@ -30,14 +34,18 @@ function App() {
           setCurrentCategory={setCurrentCategory}
           categoryColors={categoryColors}
         />
-        <FactList
-          factsData={facts}
-          setFacts={setFacts}
-          categoryColors={categoryColors}
-          loadMoreFacts={loadMoreFacts}
-          hasMore={hasMore}
-          isLoading={isLoading}
-        />
+
+        <div className="main-content">
+          <SortBy sortBy={sortBy} setSortBy={setSortBy} />
+          <FactList
+            factsData={facts}
+            setFacts={setFacts}
+            categoryColors={categoryColors}
+            loadMoreFacts={loadMoreFacts}
+            hasMore={hasMore}
+            isLoading={isLoading}
+          />
+        </div>
       </main>
     </>
   );
