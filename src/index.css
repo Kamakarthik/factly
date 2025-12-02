@@ -5,18 +5,18 @@
 }
 
 html {
-  font-size: 14px;
+  font-size: 12.6px;
 }
 
 @media (min-width: 768px) {
   html {
-    font-size: 15px;
+    font-size: 13.5px;  
   }
 }
 
 @media (min-width: 1024px) {
   html {
-    font-size: 16px;
+    font-size: 14.4px; 
   }
 }
 
