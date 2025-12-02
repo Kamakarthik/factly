@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import supabase from '../supabase';
+import supabase from '../utils/supabase';
 
 export const useFacts = (currentCategory, sortBy = 'interesting') => {
   const [facts, setFacts] = useState([]);
@@ -7,7 +7,7 @@ export const useFacts = (currentCategory, sortBy = 'interesting') => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
-  const FACTS_PER_PAGE = 5;
+  const FACTS_PER_PAGE = 10;
 
   // Reset when category changes
   useEffect(() => {
@@ -23,7 +23,9 @@ export const useFacts = (currentCategory, sortBy = 'interesting') => {
     const fetchInitial = async () => {
       setIsLoading(true);
 
-      let query = supabase.from('facts').select('*');
+      let query = supabase
+        .from('facts')
+        .select(`*,profiles(username,avatar_url)`);
 
       if (currentCategory !== 'all') {
         query = query.eq('category', currentCategory);
@@ -54,15 +56,18 @@ export const useFacts = (currentCategory, sortBy = 'interesting') => {
         FACTS_PER_PAGE - 1
       );
 
-      if (isMounted) {
-        if (!factsError && factsData) {
-          setFacts(factsData);
-          setHasMore(factsData.length === FACTS_PER_PAGE);
-        } else {
-          alert('There was a problem getting data');
-        }
+      if (!isMounted) return;
+
+      if (factsError) {
+        console.error('Error fetching facts:', factsError);
+        alert('Failed to load facts. Please try again.');
         setIsLoading(false);
+        return;
       }
+
+      setFacts(factsData || []);
+      setHasMore(factsData?.length === FACTS_PER_PAGE);
+      setIsLoading(false);
     };
 
     fetchInitial();
@@ -80,7 +85,9 @@ export const useFacts = (currentCategory, sortBy = 'interesting') => {
 
     setIsLoading(true);
 
-    let query = supabase.from('facts').select('*');
+    let query = supabase
+      .from('facts')
+      .select(`*,profiles(username,avatar_url)`);
 
     if (currentCategory !== 'all') {
       query = query.eq('category', currentCategory);
@@ -112,18 +119,22 @@ export const useFacts = (currentCategory, sortBy = 'interesting') => {
       (nextPage + 1) * FACTS_PER_PAGE - 1
     );
 
-    if (!factsError && factsData) {
-      // Append only new facts to avoid duplicates (prevents duplicate keys and re-mounts)
-      setFacts((prev) => {
-        const existingIds = new Set(prev.map((f) => f.id));
-        const newUnique = factsData.filter((f) => !existingIds.has(f.id));
-        return [...prev, ...newUnique];
-      });
-      setHasMore(factsData.length === FACTS_PER_PAGE);
-      setPage(nextPage);
-    } else {
-      alert('There was a problem getting data');
+    if (factsError) {
+      console.error('Error loading more facts:', factsError);
+      alert('Failed to load more facts. Please try again.');
+      setIsLoading(false);
+      return;
     }
+
+    // Append only new facts to avoid duplicates
+    setFacts((prev) => {
+      const existingIds = new Set(prev.map((f) => f.id));
+      const newUnique = (factsData || []).filter((f) => !existingIds.has(f.id));
+      return [...prev, ...newUnique];
+    });
+
+    setHasMore(factsData?.length === FACTS_PER_PAGE);
+    setPage(nextPage);
 
     setIsLoading(false);
   }, [page, isLoading, hasMore, currentCategory, sortBy]);
