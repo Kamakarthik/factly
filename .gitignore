@@ -26,3 +26,10 @@ dist-ssr
 # Environment files
 .env.local
 .env.*.local
+
+# Backend specific
+factly-backend/config.env
+factly-backend/.env.*
+factly-backend/logs
+factly-backend/tmp
+factly-backend/coverage
