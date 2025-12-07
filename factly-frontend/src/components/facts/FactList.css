@@ -1,0 +1,266 @@
+/* Fact structure */
+.fact {
+  font-size: 16px;
+  line-height: 1.5;
+  background-color: #44403c;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  letter-spacing: -0.3px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+@media (min-width: 1100px) {
+  .fact {
+    font-size: 18px;
+    padding: 16px 20px;
+    margin-bottom: 14px;
+    /* flex-direction: row;
+    align-items: center; */
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .fact {
+    font-size: 20px;
+    padding: 16px 24px;
+    margin-bottom: 16px;
+    gap: 20px;
+    letter-spacing: -0.5px;
+  }
+}
+
+.fact p {
+  flex: 1;
+  word-break: break-word;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.tag {
+  text-transform: uppercase;
+  font-size: 12px;
+  font-family: 'Coiny', sans-serif;
+  padding: 4px 12px 3px;
+  border-radius: 100px;
+  white-space: nowrap;
+  align-self: flex-start;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1100px) {
+  .tag {
+    font-size: 13px;
+    align-self: center;
+  }
+}
+
+@media (min-width: 1280px) {
+  .tag {
+    font-size: 14px;
+  }
+}
+
+.source:link,
+.source:visited {
+  color: #a8a29e;
+  text-decoration: none;
+  margin-left: 8px;
+  transition: color 0.3s ease;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1100px) {
+  .source:link,
+  .source:visited {
+    margin-left: 12px;
+    font-size: inherit;
+  }
+}
+
+.source:hover,
+.source:active {
+  color: #3b82f6;
+}
+
+/* Fact user info */
+.fact-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+@media (min-width: 1100px) {
+  .fact-user {
+    width: auto;
+    flex-shrink: 0;
+  }
+}
+
+.fact-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #78716c;
+  background-color: #44403c;
+}
+
+.fact-username {
+  font-size: 13px;
+  font-weight: 600;
+  color: #a8a29e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+@media (min-width: 1100px) {
+  .fact-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .fact-username {
+    font-size: 14px;
+    max-width: 150px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .fact-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .fact-username {
+    font-size: 15px;
+  }
+}
+
+/* Wrapper for content below user profile */
+.fact-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+@media (min-width: 1100px) {
+  .fact-content-wrapper {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .fact-content-wrapper {
+    gap: 20px;
+  }
+}
+
+/* Scrolling */
+.facts-list {
+  height: 60vh;
+  max-height: 600px;
+  height: auto;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+@media (min-width: 1100px) {
+  .facts-list {
+    max-height: 600px;
+    height: auto;
+  }
+}
+
+@media (min-width: 1280px) {
+  .facts-list {
+    max-height: 600px;
+    height: auto;
+    padding-right: 10px;
+  }
+}
+
+/* Custom scrollbar */
+.facts-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+@media (min-width: 1100px) {
+  .facts-list::-webkit-scrollbar {
+    width: 8px;
+  }
+}
+
+.facts-list::-webkit-scrollbar-track {
+  background: #44403c;
+  border-radius: 10px;
+}
+
+.facts-list::-webkit-scrollbar-thumb {
+  background: #78716c;
+  border-radius: 10px;
+}
+
+.facts-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a29e;
+}
+
+.end-message {
+  text-align: center;
+  padding: 16px;
+  color: #a8a29e;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+@media (min-width: 768px) {
+  .end-message {
+    padding: 18px;
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .end-message {
+    padding: 20px;
+    font-size: 16px;
+  }
+}
+
+.disputed {
+  color: #ef4444;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+/* Clickable user info */
+.fact-user-clickable {
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+
+.fact-user-clickable:hover {
+  background-color: #57534e;
+  padding: 4px 8px;
+  margin: -4px -8px;
+}
+
+.fact-user-clickable:hover .fact-username {
+  color: #fafaf9;
+}
+
+.fact-user-clickable:hover .fact-avatar {
+  border-color: #a8a29e;
+  transform: scale(1.05);
+}

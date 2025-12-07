@@ -1,0 +1,36 @@
+/* USER INFO WITH AVATAR */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #a8a29e;
+}
+
+.user-email {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fafaf9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .user-info {
+    gap: 8px;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .user-email {
+    font-size: 14px;
+  }
+}

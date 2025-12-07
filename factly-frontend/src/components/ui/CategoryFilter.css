@@ -1,0 +1,59 @@
+.category {
+  margin-bottom: 12px;
+}
+
+@media (min-width: 768px) {
+  .category {
+    margin-bottom: 14px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .category {
+    margin-bottom: 16px;
+  }
+}
+
+.btn-all-categories {
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .btn-all-categories {
+    margin-bottom: 14px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .btn-all-categories {
+    margin-bottom: 16px;
+  }
+}
+
+/* Long words are allowed to break to the next line to avoid overflow */
+/* .btn-category {
+  white-space: normal;
+  word-break: break-word;
+  text-align: center;
+
+  background-image: none;
+} */
+
+.btn-category {
+  width: 100%;
+  background-image: none !important;
+}
+
+/* Category sidebar on mobile */
+@media (max-width: 1099px) {
+  aside ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+  }
+
+  .category {
+    margin-bottom: 0;
+  }
+}
