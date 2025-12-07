@@ -311,3 +311,26 @@
   padding: 60px 20px;
   grid-column: 1 / -1;
 }
+
+/* Active tab button styling */
+.sidebar-btn-active {
+  background-color: #3b82f6 !important;
+  border-color: #2563eb !important;
+  color: #fafaf9 !important;
+}
+
+.sidebar-btn-active:hover {
+  background-color: #2563eb !important;
+}
+
+/* Profile stats - multiple lines */
+.profile-stats {
+  color: #a8a29e;
+  font-size: 13px;
+  margin: 0;
+  margin-bottom: 4px;
+}
+
+.profile-stats:last-child {
+  margin-bottom: 0;
+}

@@ -1,34 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import supabase from '../../utils/supabase';
 import './Header.css';
 
-const Header = ({ showForm, setShowForm, onNavigate, currentPage }) => {
+const Header = ({ showForm, setShowForm }) => {
   const { user, signOut } = useAuth();
-  const [profile, setProfile] = useState(null);
-
-  // Fetch profile from profiles table
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user?.id) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username, avatar_url')
-          .eq('id', user.id)
-          .single();
-
-        if (error) throw error;
-        setProfile(data);
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-        // Profile will remain null, fallback to user metadata
-      }
-    };
-
-    fetchProfile();
-  }, [user?.id]);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -39,9 +16,13 @@ const Header = ({ showForm, setShowForm, onNavigate, currentPage }) => {
     }
   };
 
-  // Get username from metadata, fallback to email
-  const displayName =
-    profile?.username || user?.user_metadata?.username || user?.email;
+  // Get display name and avatar from user object
+  const displayName = user?.username || user?.email;
+  const avatarUrl = user?.avatarUrl || '/default-avatar.svg';
+
+  // Determine current page from URL
+  const isProfilePage = location.pathname === '/profile' || location.pathname.startsWith('/user/');
+  const isHomePage = location.pathname === '/';
 
   return (
     <header className="header">
@@ -50,27 +31,31 @@ const Header = ({ showForm, setShowForm, onNavigate, currentPage }) => {
         <h1>Factly</h1>
       </div>
 
-      {currentPage !== 'profile' && (
+      {/* Only show user info on home page */}
+      {isHomePage && (
         <div className="user-info">
           <img
-            src={profile?.avatar_url || '/default-avatar.svg'}
-            alt={profile?.username || 'User'}
+            src={avatarUrl || '/default-avatar.svg'}
+            alt={displayName || 'User'}
             className="user-avatar"
-            onClick={() => onNavigate('profile')}
+            onClick={() => navigate('/profile')}
             style={{ cursor: 'pointer' }}
             title="View Profile"
+            onError={(e) => {
+              e.target.src = '/default-avatar.svg';
+            }}
           />
           <span className="user-email">{displayName}</span>
         </div>
       )}
 
       <div className="header-actions">
-        {currentPage === 'profile' && (
-          <button className="btn btn-large" onClick={() => onNavigate('home')}>
+        {isProfilePage && (
+          <button className="btn btn-large" onClick={() => navigate('/')}>
             ← Back to Home
           </button>
         )}
-        {currentPage !== 'profile' && (
+        {isHomePage && (
           <button
             className="btn btn-large btn-open"
             onClick={() => setShowForm((show) => !show)}

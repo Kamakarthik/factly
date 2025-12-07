@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import supabase from '../utils/supabase';
+import API from '../utils/api';
 
 // Default fallback categories
 const DEFAULT_CATEGORIES = {
@@ -19,25 +19,18 @@ export const useCategories = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const { data: categoriesData, error } = await supabase
-          .from('categories')
-          .select('category, colour');
-
-        if (error) throw error;
+        const response = await API.get('/categories');
+        const categoriesData = response.data.data.categories;
 
         if (categoriesData && categoriesData.length > 0) {
-          // Create a mapping object:{"technology":"3b82f6"..}
           const colorMap = {};
           categoriesData.forEach((cat) => {
-            const cleanCategory = cat.category.trim();
-            const cleanColor = cat.colour.trim();
-            colorMap[cleanCategory] = cleanColor;
+            colorMap[cat.category.trim()] = cat.colour.trim();
           });
           setCategoryColors(colorMap);
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
-        // Keep default categories on error
       }
     };
 

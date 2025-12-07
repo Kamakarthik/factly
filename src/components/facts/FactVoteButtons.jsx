@@ -1,79 +1,63 @@
-import { useState, useEffect } from 'react';
-import supabase from '../../utils/supabase';
+import { useState } from 'react';
+import API from '../../utils/api';
 import './FactVoteButtons.css';
 
 const FactVoteButtons = ({ fact, setFacts, showDeleteOnly }) => {
   const [isUpdating, setIsUpdating] = useState(false);
-  // Get initial vote state from localStorage
-  const getStoredVote = () => {
-    try {
-      const stored = localStorage.getItem(`vote_${fact.id}`);
-      return stored || null;
-    } catch {
-      return null;
-    }
-  };
 
-  const [userVote, setUserVote] = useState(getStoredVote);
-
-  // Save vote to localStorage whenever it changes
-  useEffect(() => {
-    try {
-      if (userVote) {
-        localStorage.setItem(`vote_${fact.id}`, userVote);
-      } else {
-        localStorage.removeItem(`vote_${fact.id}`);
-      }
-    } catch (error) {
-      console.error('Failed to save vote:', error);
-    }
-  }, [userVote, fact.id]);
+  // Get user's vote from fact data (comes from backend)
+  const userVote = fact.userVote || null;
 
   // Handle vote button clicks
-  const handleVote = async (columnName) => {
+  const handleVote = async (voteType) => {
     if (isUpdating) return;
 
     setIsUpdating(true);
 
     try {
-      const updates = {};
-      // Case 1: user clicks the same vote again → undo
-      if (userVote === columnName) {
-        updates[columnName] = Math.max(0, fact[columnName] - 1);
-        setUserVote(null);
-      }
-      // Case 2: user switches vote
-      else {
-        updates[columnName] = fact[columnName] + 1;
-        if (userVote) {
-          updates[userVote] = Math.max(0, fact[userVote] - 1);
-        }
-        setUserVote(columnName);
-      }
+      // Backend handles all logic: unvote, vote, switch
+      const response = await API.patch(`/facts/${fact.id}/vote`, {
+        voteType,
+      });
 
-      const { data: updatedFact, error } = await supabase
-        .from('facts')
-        .update(updates)
-        .eq('id', fact.id)
-        .select('*,profiles(username,avatar_url)')
-        .single();
+      const updatedFact = response.data.data.fact;
 
-      if (error) throw error;
+      // Transform MongoDB response
+      const transformedFact = {
+        id: updatedFact._id,
+        text: updatedFact.text,
+        source: updatedFact.source,
+        category: updatedFact.category,
+        user_id: updatedFact.userId,
+        votesInteresting: updatedFact.votesInteresting,
+        votesMindBlowing: updatedFact.votesMindBlowing,
+        votesFalse: updatedFact.votesFalse,
+        created_at: updatedFact.createdAt,
+        userVote: updatedFact.userVote || null, // NEW: User's vote from DB
+        profiles: updatedFact.user
+          ? {
+              username: updatedFact.user.username,
+              avatar_url: updatedFact.user.avatarUrl,
+            }
+          : fact.profiles,
+      };
 
-      // Update local state so UI shows new votes immediately
+      // Update UI
       setFacts((facts) =>
-        facts.map((f) => (f.id === fact.id ? updatedFact : f))
+        facts.map((f) => (f.id === fact.id ? transformedFact : f))
       );
     } catch (error) {
       console.error('Vote error:', error);
-      alert('Failed to update vote. Please try again.');
-      // Revert optimistic update
-      setUserVote(userVote);
+      alert(
+        error.response?.data?.message ||
+          'Failed to update vote. Please try again.'
+      );
     } finally {
       setIsUpdating(false);
     }
   };
 
+  // Read-only view for profile page
   if (showDeleteOnly) {
     return (
       <div className="vote-buttons">

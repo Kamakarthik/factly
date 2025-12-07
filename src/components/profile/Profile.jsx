@@ -3,7 +3,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { useCategories } from '../../hooks/useCategories';
 import FactList from '../facts/FactList';
 import EditFactModal from '../facts/EditFactModal';
-import supabase from '../../utils/supabase';
+import UserSettings from './UserSettings';
+import API from '../../utils/api';
 import { PacmanLoader } from 'react-spinners';
 import './Profile.css';
 
@@ -11,9 +12,11 @@ export default function Profile({ onFactDelete, onFactUpdate }) {
   const { user } = useAuth();
   const categoryColors = useCategories();
   const [userFacts, setUserFacts] = useState([]);
+  const [votedFacts, setVotedFacts] = useState([]);
+  const [activeTab, setActiveTab] = useState('my-facts');
   const [isLoading, setIsLoading] = useState(true);
-  const [profile, setProfile] = useState(null); // Fetch profile data
   const [editingFact, setEditingFact] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Track previous facts to detect deletions & syncs with home page
   const prevFactsRef = useRef([]);
@@ -28,51 +31,50 @@ export default function Profile({ onFactDelete, onFactUpdate }) {
       facts.map((f) => (f.id === updatedFact.id ? updatedFact : f))
     );
 
+    // Update in voted-facts tab if it exists
+    setVotedFacts((facts) =>
+      facts.map((f) => (f.id === updatedFact.id ? updatedFact : f))
+    );
+
     //  Notify parent (App.jsx) to update home page
     onFactUpdate?.(updatedFact);
   };
 
-  // Fetch profile data
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user?.id) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (error) throw error;
-        setProfile(data);
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-      }
-    };
-
-    fetchProfile();
-  }, [user?.id]);
-
-  const displayName =
-    profile?.username || user?.user_metadata?.username || user?.email;
-
   // Fetch user's facts
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id && !user?._id) return;
 
     const fetchUserFacts = async () => {
       setIsLoading(true);
 
       try {
-        const { data, error } = await supabase
-          .from('facts')
-          .select('*,profiles(username,avatar_url)')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+        const response = await API.get('/facts/my-facts');
+        const factsData = response.data.data.facts;
 
-        if (error) throw error;
-        setUserFacts(data || []);
+        // Transform MongoDB data
+        const transformedFacts = factsData.map((fact) => ({
+          id: fact._id,
+          text: fact.text,
+          source: fact.source,
+          category: fact.category,
+          user_id: fact.userId,
+          votesInteresting: fact.votesInteresting,
+          votesMindBlowing: fact.votesMindBlowing,
+          votesFalse: fact.votesFalse,
+          created_at: fact.createdAt,
+          userVote: fact.userVote || null,
+          profiles: fact.user
+            ? {
+                username: fact.user.username,
+                avatar_url: fact.user.avatarUrl,
+              }
+            : {
+                username: user.username,
+                avatar_url: user.avatarUrl,
+              },
+        }));
+
+        setUserFacts(transformedFacts);
       } catch (error) {
         console.error('Error loading facts:', error);
         alert('Failed to load your facts');
@@ -82,10 +84,50 @@ export default function Profile({ onFactDelete, onFactUpdate }) {
     };
 
     fetchUserFacts();
-  }, [user?.id]);
+  }, [user]);
+
+  // Fetch facts user has voted on
+  useEffect(() => {
+    if (!user?.id && !user?._id) return;
+
+    const fetchVotedFacts = async () => {
+      try {
+        const response = await API.get('/facts/voted-facts');
+        const factsData = response.data.data.facts;
+
+        // Transform MongoDB data
+        const transformedFacts = factsData.map((fact) => ({
+          id: fact._id,
+          text: fact.text,
+          source: fact.source,
+          category: fact.category,
+          user_id: fact.userId,
+          votesInteresting: fact.votesInteresting,
+          votesMindBlowing: fact.votesMindBlowing,
+          votesFalse: fact.votesFalse,
+          created_at: fact.createdAt,
+          userVote: fact.userVote || null,
+          profiles: fact.user
+            ? {
+                username: fact.user.username,
+                avatar_url: fact.user.avatarUrl,
+              }
+            : null,
+        }));
+
+        setVotedFacts(transformedFacts);
+      } catch (error) {
+        console.error('Error loading voted facts:', error);
+      }
+    };
+
+    fetchVotedFacts();
+  }, [user]);
 
   // Detect deletions and notify parent
   useEffect(() => {
+    if (activeTab !== 'my-facts') return; // Only track deletions on my-facts tab
+
     // Skip on initial render
     if (prevFactsRef.current.length === 0 && userFacts.length > 0) {
       prevFactsRef.current = userFacts;
@@ -104,7 +146,28 @@ export default function Profile({ onFactDelete, onFactUpdate }) {
 
     // Update ref for next comparison
     prevFactsRef.current = userFacts;
-  }, [userFacts, onFactDelete]);
+  }, [userFacts, onFactDelete, activeTab]);
+
+  // Handle vote updates from voted facts - sync to home page
+  const handleVotedFactsUpdate = (updaterOrArray) => {
+    setVotedFacts((currentFacts) => {
+      // Handle both updater functions and direct arrays
+      const newFacts =
+        typeof updaterOrArray === 'function'
+          ? updaterOrArray(currentFacts)
+          : updaterOrArray;
+
+      // Sync all updated facts to home page
+      // Defer home page sync to avoid setState during render
+      setTimeout(() => {
+        newFacts.forEach((fact) => {
+          onFactUpdate?.(fact);
+        });
+      }, 0);
+
+      return newFacts;
+    });
+  };
 
   if (isLoading) {
     return (
@@ -115,6 +178,17 @@ export default function Profile({ onFactDelete, onFactUpdate }) {
       </div>
     );
   }
+
+  // Show settings 
+  if (showSettings) {
+    return <UserSettings onClose={() => setShowSettings(false)} />;
+  }
+
+  const displayName = user?.username || user?.email;
+  const avatarUrl = user?.avatarUrl || '/default-avatar.svg';
+  const currentFacts = activeTab === 'my-facts' ? userFacts : votedFacts;
+  const currentSetFacts =
+    activeTab === 'my-facts' ? setUserFacts : handleVotedFactsUpdate;
 
   return (
     <div className="profile-wrapper">
@@ -132,9 +206,12 @@ export default function Profile({ onFactDelete, onFactUpdate }) {
       <aside className="profile-sidebar">
         <div className="profile-header">
           <img
-            src={profile?.avatar_url || '/default-avatar.svg'}
+            src={avatarUrl}
             alt="Profile"
             className="profile-avatar"
+            onError={(e) => {
+              e.target.src = '/default-avatar.svg';
+            }}
           />
           <div className="profile-info">
             <h2>{displayName}</h2>
@@ -142,32 +219,59 @@ export default function Profile({ onFactDelete, onFactUpdate }) {
               {userFacts.length} {userFacts.length === 1 ? 'fact' : 'facts'}{' '}
               shared
             </p>
+            <p className="profile-stats">
+              {votedFacts.length}{' '}
+              {votedFacts.length === 1 ? 'reaction' : 'reactions'}
+            </p>
           </div>
         </div>
 
-        <button className="sidebar-btn">user settings</button>
-        <button className="sidebar-btn">admin dash board</button>
+        {/* Tab Buttons (NEW) */}
+        <button className="sidebar-btn" onClick={() => setShowSettings(true)}>
+          user settings
+        </button>
+        <button
+          className={`sidebar-btn ${
+            activeTab === 'my-facts' ? 'sidebar-btn-active' : ''
+          }`}
+          onClick={() => setActiveTab('my-facts')}
+        >
+          my facts
+        </button>
+        <button
+          className={`sidebar-btn ${
+            activeTab === 'voted-facts' ? 'sidebar-btn-active' : ''
+          }`}
+          onClick={() => setActiveTab('voted-facts')}
+        >
+          reacted facts
+        </button>
+        <button className="sidebar-btn">admin dashboard</button>
       </aside>
 
       {/* Main Content */}
       <div className="profile-main">
         <div className="profile-facts">
-          <h3>Your Facts</h3>
+          <h3>
+            {activeTab === 'my-facts' ? 'Your Facts' : 'Facts You Reacted To'}
+          </h3>
 
-          {userFacts.length === 0 ? (
+          {currentFacts.length === 0 ? (
             <p className="no-facts">
-              You haven't shared any facts yet. Start sharing! 🚀
+              {activeTab === 'my-facts'
+                ? "You haven't shared any facts yet. Start sharing! 🚀"
+                : "You haven't reacted to any facts yet. Start exploring! 👍"}
             </p>
           ) : (
             <FactList
-              factsData={userFacts}
-              setFacts={setUserFacts} // Custom setFacts
+              factsData={currentFacts}
+              setFacts={currentSetFacts}
               categoryColors={categoryColors}
-              loadMoreFacts={() => {}} // No pagination needed
+              loadMoreFacts={() => {}}
               hasMore={false}
               isLoading={false}
-              showDeleteOnly={true} // show only delete buttons
-              onEdit={handleEdit}
+              showDeleteOnly={activeTab === 'my-facts'} // Only show edit/delete on my-facts
+              onEdit={activeTab === 'my-facts' ? handleEdit : null}
             />
           )}
         </div>

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import FactVoteButtons from './FactVoteButtons';
-import supabase from '../../utils/supabase';
+import API from '../../utils/api';
 import { PacmanLoader } from 'react-spinners';
 import './FactList.css';
 
@@ -16,6 +17,7 @@ function FactList({
   onEdit,
 }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const listRef = useRef(null);
 
   useEffect(() => {
@@ -53,21 +55,22 @@ function FactList({
     if (!confirmDelete) return;
 
     try {
-      const { error } = await supabase
-        .from('facts')
-        .delete()
-        .eq('id', factId)
-        .select(); // Add select to see what would be deleted
-
-      // console.log('Delete response:', { data, error });
-
-      if (error) throw error;
-
-      // Update UI optimistically
+      await API.delete(`/facts/${factId}`);
       setFacts((facts) => facts.filter((f) => f.id !== factId));
     } catch (error) {
       console.error('Delete error:', error);
-      alert('Failed to delete fact. Please try again.');
+      alert(
+        error.response?.data?.message ||
+          'Failed to delete fact. Please try again.'
+      );
+    }
+  };
+
+  const handleUserClick = (userId) => {
+    if (userId === user?._id) {
+      navigate('/profile'); // Go to own profile
+    } else {
+      navigate(`/user/${userId}`); // Go to other user's profile
     }
   };
 
@@ -88,13 +91,17 @@ function FactList({
           const isDisputed =
             falseVotes > 0 && falseVotes >= positiveVotes * 0.5;
           const bgcolor = categoryColors[fact.category?.trim()] || '6b7280';
-          const isOwner = user?.id === fact.user_id;
-          const isAdmin = user?.app_metadata?.role === 'admin';
+          const isOwner = user?._id === fact.user_id;
+          const isAdmin = user?.role === 'admin';
 
           return (
             <li className="fact" key={fact.id}>
               {/* User info section */}
-              <div className="fact-user">
+              <div
+                className="fact-user fact-user-clickable"
+                onClick={() => handleUserClick(fact.user_id)}
+                style={{ cursor: 'pointer' }}
+              >
                 <img
                   src={fact.profiles?.avatar_url || '/default-avatar.svg'}
                   alt={fact.profiles?.username || 'User'}

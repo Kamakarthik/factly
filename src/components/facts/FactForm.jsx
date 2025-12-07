@@ -1,6 +1,6 @@
 import { useAuth } from '../../hooks/useAuth';
 import { useFactForm } from '../../hooks/useFactForm';
-import supabase from '../../utils/supabase';
+import API from '../../utils/api';
 import './FactForm.css';
 
 function FactForm({ setFacts, setShowForm, categoryColors }) {
@@ -28,32 +28,45 @@ function FactForm({ setFacts, setShowForm, categoryColors }) {
 
     setIsUploading(true);
     try {
-      // 1. Insert and get complete fact with profile 
-      const { data: newFactArray, insertError } = await supabase
-        .from('facts')
-        .insert([{ text, source, category, user_id: user.id }])
-        .select('*,profiles(username,avatar_url)');
+      const response = await API.post('/facts', {
+        text,
+        source,
+        category,
+      });
 
-      if (insertError) throw insertError;
+      const newFact = response.data.data.fact;
 
-      // Get first item from array
-      const newFact = newFactArray?.[0];
+      // Transform to match frontend structure
+      const transformedFact = {
+        id: newFact._id,
+        text: newFact.text,
+        source: newFact.source,
+        category: newFact.category,
+        user_id: newFact.userId,
+        votesInteresting: newFact.votesInteresting,
+        votesMindBlowing: newFact.votesMindBlowing,
+        votesFalse: newFact.votesFalse,
+        created_at: newFact.createdAt,
+        userVote: newFact.userVote || null,
+        profiles: newFact.user
+          ? {
+              username: newFact.user.username,
+              avatar_url: newFact.user.avatarUrl,
+            }
+          : {
+              username: user.username,
+              avatar_url: user.avatarUrl,
+            },
+      };
 
-      if (!newFact || !newFact.id) {
-        throw new Error('Failed to create fact');
-      }
-
-      // console.log('New fact added:', newFact);
-
-      // 3. Add newFact to UI with profile data (or fallback to basic data)
-      setFacts((facts) => [newFact, ...facts]);
-
-      // 4. Reset input fields and close form
+      setFacts((facts) => [transformedFact, ...facts]);
       resetForm();
       setShowForm(false);
     } catch (error) {
       console.error('Error adding fact:', error);
-      alert('Failed to add fact. Please try again.');
+      alert(
+        error.response?.data?.message || 'Failed to add fact. Please try again.'
+      );
     } finally {
       setIsUploading(false);
     }
@@ -94,8 +107,8 @@ function FactForm({ setFacts, setShowForm, categoryColors }) {
           );
         })}
       </select>
-      <button className="btn btn-large" disabled={isUploading}>
-        Post
+      <button className="btn btn-large" disabled={isUploading || !isValid}>
+        {isUploading ? 'Posting...' : 'Post'}
       </button>
     </form>
   );

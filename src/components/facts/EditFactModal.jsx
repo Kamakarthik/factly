@@ -1,5 +1,5 @@
 import { useFactForm } from '../../hooks/useFactForm';
-import supabase from '../../utils/supabase';
+import API from '../../utils/api';
 import './EditFactModal.css';
 
 export default function EditFactModal({
@@ -29,20 +29,42 @@ export default function EditFactModal({
     setIsUploading(true);
 
     try {
-      const { data: updatedFact, error } = await supabase
-        .from('facts')
-        .update({ text, source, category })
-        .eq('id', fact.id)
-        .select('*,profiles(username,avatar_url)')
-        .single();
+      const response = await API.patch(`/facts/${fact.id}`, {
+        text,
+        source,
+        category,
+      });
 
-      if (error) throw error;
+      const updatedFact = response.data.data.fact;
 
-      onUpdate(updatedFact);
+      // Transform to match frontend structure
+      const transformedFact = {
+        id: updatedFact._id,
+        text: updatedFact.text,
+        source: updatedFact.source,
+        category: updatedFact.category,
+        user_id: updatedFact.userId,
+        votesInteresting: updatedFact.votesInteresting,
+        votesMindBlowing: updatedFact.votesMindBlowing,
+        votesFalse: updatedFact.votesFalse,
+        created_at: updatedFact.createdAt,
+        userVote: updatedFact.userVote || fact.userVote || null,
+        profiles: updatedFact.user
+          ? {
+              username: updatedFact.user.username,
+              avatar_url: updatedFact.user.avatarUrl,
+            }
+          : fact.profiles,
+      };
+
+      onUpdate(transformedFact);
       onClose();
     } catch (error) {
       console.error('Update error:', error);
-      alert('Failed to update fact. Please try again.');
+      alert(
+        error.response?.data?.message ||
+          'Failed to update fact. Please try again.'
+      );
     } finally {
       setIsUploading(false);
     }

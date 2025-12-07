@@ -243,3 +243,24 @@
   font-weight: 600;
   margin-right: 8px;
 }
+
+/* Clickable user info */
+.fact-user-clickable {
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+
+.fact-user-clickable:hover {
+  background-color: #57534e;
+  padding: 4px 8px;
+  margin: -4px -8px;
+}
+
+.fact-user-clickable:hover .fact-username {
+  color: #fafaf9;
+}
+
+.fact-user-clickable:hover .fact-avatar {
+  border-color: #a8a29e;
+  transform: scale(1.05);
+}
