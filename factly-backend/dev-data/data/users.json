@@ -1,0 +1,33 @@
+[
+  {
+    "username": "Adam🛡️",
+    "email": "admin@factly.com",
+    "password": "test1234",
+    "passwordConfirm": "test1234"
+  },
+  {
+    "username": "Meliodas",
+    "email": "fact@mailsac.com",
+    "password": "test1234"
+  },
+  {
+    "username": "sara",
+    "email": "fact1@mailsac.com",
+    "password": "test1234"
+  },
+  {
+    "username": "King",
+    "email": "fact2@mailsac.com",
+    "password": "test1234"
+  },
+  {
+    "username": "Ban",
+    "email": "fact3@mailsac.com",
+    "password": "test1234"
+  },
+  {
+    "username": "Merlin",
+    "email": "fact4@mailsac.com",
+    "password": "test1234"
+  }
+]
