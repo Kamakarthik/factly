@@ -5,7 +5,7 @@ import { useCategories } from '../../hooks/useCategories';
 import FactList from '../facts/FactList';
 import API from '../../utils/api';
 import { PacmanLoader } from 'react-spinners';
-import './profile.css';
+import './Profile.css';
 
 export default function UserProfile() {
   const { userId } = useParams(); // Get userId from URL
