@@ -16,6 +16,8 @@ const categoryRoutes = require('./routes/categoryRoutes');
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 // 1) GLOBAL MIDDLEWARES
 // Set security HTTP headers
 app.use(helmet());
