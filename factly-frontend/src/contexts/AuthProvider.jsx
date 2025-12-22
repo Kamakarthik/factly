@@ -9,19 +9,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Check if user is logged in
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
       try {
         const response = await API.get('/users/me');
         setUser(response.data.data.user);
       } catch (error) {
         console.error('Auth check failed:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -39,11 +32,9 @@ export const AuthProvider = ({ children }) => {
         passwordConfirm: password,
       });
 
-      const { token, data } = response.data;
-      localStorage.setItem('token', token);
-      setUser(data.user);
+      setUser(response.data.data.user);
 
-      return { data: data.user, error: null };
+      return { data: response.data.data.user, error: null };
     } catch (error) {
       return {
         data: null,
@@ -59,11 +50,9 @@ export const AuthProvider = ({ children }) => {
         password,
       });
 
-      const { token, data } = response.data;
-      localStorage.setItem('token', token);
-      setUser(data.user);
+      setUser(response.data.data.user);
 
-      return { data: data.user, error: null };
+      return { data: response.data.data.user, error: null };
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Login failed');
     }
@@ -72,12 +61,10 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     try {
       await API.get('/auth/logout');
-      localStorage.removeItem('token');
       setUser(null);
     } catch (error) {
       console.error('Logout failed:', error);
       // Still remove token and user on error
-      localStorage.removeItem('token');
       setUser(null);
     }
   };
