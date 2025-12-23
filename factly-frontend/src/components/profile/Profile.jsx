@@ -5,6 +5,7 @@ import FactList from '../facts/FactList';
 import EditFactModal from '../facts/EditFactModal';
 import UserSettings from './UserSettings';
 import API from '../../utils/api';
+import { transformFacts } from '../../utils/transformers';
 import { PacmanLoader } from 'react-spinners';
 import './Profile.css';
 
@@ -52,27 +53,10 @@ export default function Profile({ onFactDelete, onFactUpdate }) {
         const factsData = response.data.data.facts;
 
         // Transform MongoDB data
-        const transformedFacts = factsData.map((fact) => ({
-          id: fact._id,
-          text: fact.text,
-          source: fact.source,
-          category: fact.category,
-          user_id: fact.userId,
-          votesInteresting: fact.votesInteresting,
-          votesMindBlowing: fact.votesMindBlowing,
-          votesFalse: fact.votesFalse,
-          created_at: fact.createdAt,
-          userVote: fact.userVote || null,
-          profiles: fact.user
-            ? {
-                username: fact.user.username,
-                avatar_url: fact.user.avatarUrl,
-              }
-            : {
-                username: user.username,
-                avatar_url: user.avatarUrl,
-              },
-        }));
+        const transformedFacts = transformFacts(factsData, {
+          username: user.username,
+          avatar_url: user.avatarUrl,
+        });
 
         setUserFacts(transformedFacts);
       } catch (error) {
@@ -96,24 +80,7 @@ export default function Profile({ onFactDelete, onFactUpdate }) {
         const factsData = response.data.data.facts;
 
         // Transform MongoDB data
-        const transformedFacts = factsData.map((fact) => ({
-          id: fact._id,
-          text: fact.text,
-          source: fact.source,
-          category: fact.category,
-          user_id: fact.userId,
-          votesInteresting: fact.votesInteresting,
-          votesMindBlowing: fact.votesMindBlowing,
-          votesFalse: fact.votesFalse,
-          created_at: fact.createdAt,
-          userVote: fact.userVote || null,
-          profiles: fact.user
-            ? {
-                username: fact.user.username,
-                avatar_url: fact.user.avatarUrl,
-              }
-            : null,
-        }));
+        const transformedFacts = transformFacts(factsData);
 
         setVotedFacts(transformedFacts);
       } catch (error) {
@@ -179,7 +146,7 @@ export default function Profile({ onFactDelete, onFactUpdate }) {
     );
   }
 
-  // Show settings 
+  // Show settings
   if (showSettings) {
     return <UserSettings onClose={() => setShowSettings(false)} />;
   }

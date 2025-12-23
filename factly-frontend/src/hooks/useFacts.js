@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import API from '../utils/api';
+import { transformFacts } from '../utils/transformers';
 
 export const useFacts = (currentCategory, sortBy = 'interesting') => {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ export const useFacts = (currentCategory, sortBy = 'interesting') => {
   useEffect(() => {
     // DON'T fetch if user is not ready yet
     if (!user) {
-      console.log('Waiting for user authentication...');
+      // console.log('Waiting for user authentication...');
       return;
     }
 
@@ -60,24 +61,7 @@ export const useFacts = (currentCategory, sortBy = 'interesting') => {
         if (!isMounted) return;
 
         // Transform MongoDB data
-        const transformedFacts = factsData.map((fact) => ({
-          id: fact._id,
-          text: fact.text,
-          source: fact.source,
-          category: fact.category,
-          user_id: fact.userId,
-          votesInteresting: fact.votesInteresting,
-          votesMindBlowing: fact.votesMindBlowing,
-          votesFalse: fact.votesFalse,
-          created_at: fact.createdAt,
-          userVote: fact.userVote || null,
-          profiles: fact.user
-            ? {
-                username: fact.user.username,
-                avatar_url: fact.user.avatarUrl,
-              }
-            : null,
-        }));
+        const transformedFacts = transformFacts(factsData);
 
         setFacts(transformedFacts);
         setHasMore(factsData.length === FACTS_PER_PAGE);
@@ -117,24 +101,7 @@ export const useFacts = (currentCategory, sortBy = 'interesting') => {
       const response = await API.get('/facts', { params });
       const factsData = response.data.data.facts;
 
-      const transformedFacts = factsData.map((fact) => ({
-        id: fact._id,
-        text: fact.text,
-        source: fact.source,
-        category: fact.category,
-        user_id: fact.userId,
-        votesInteresting: fact.votesInteresting,
-        votesMindBlowing: fact.votesMindBlowing,
-        votesFalse: fact.votesFalse,
-        created_at: fact.createdAt,
-        userVote: fact.userVote || null,
-        profiles: fact.user
-          ? {
-              username: fact.user.username,
-              avatar_url: fact.user.avatarUrl,
-            }
-          : null,
-      }));
+      const transformedFacts = transformFacts(factsData);
 
       setFacts((prev) => {
         const existingIds = new Set(prev.map((f) => f.id));

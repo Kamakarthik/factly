@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useCategories } from '../../hooks/useCategories';
 import FactList from '../facts/FactList';
 import API from '../../utils/api';
+import { transformFacts } from '../../utils/transformers';
 import { PacmanLoader } from 'react-spinners';
 import './Profile.css';
 
@@ -28,24 +29,7 @@ export default function UserProfile() {
         const factsData = factsResponse.data.data.facts;
 
         // Transform MongoDB data
-        const transformedFacts = factsData.map((fact) => ({
-          id: fact._id,
-          text: fact.text,
-          source: fact.source,
-          category: fact.category,
-          user_id: fact.userId,
-          votesInteresting: fact.votesInteresting,
-          votesMindBlowing: fact.votesMindBlowing,
-          votesFalse: fact.votesFalse,
-          created_at: fact.createdAt,
-          userVote: fact.userVote || null,
-          profiles: fact.user
-            ? {
-                username: fact.user.username,
-                avatar_url: fact.user.avatarUrl,
-              }
-            : null,
-        }));
+        const transformedFacts = transformFacts(factsData);
 
         setUserFacts(transformedFacts);
 

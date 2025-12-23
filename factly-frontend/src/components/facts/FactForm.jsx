@@ -1,6 +1,7 @@
 import { useAuth } from '../../hooks/useAuth';
 import { useFactForm } from '../../hooks/useFactForm';
 import API from '../../utils/api';
+import { transformFact } from '../../utils/transformers';
 import './FactForm.css';
 
 function FactForm({ setFacts, setShowForm, categoryColors }) {
@@ -37,27 +38,10 @@ function FactForm({ setFacts, setShowForm, categoryColors }) {
       const newFact = response.data.data.fact;
 
       // Transform to match frontend structure
-      const transformedFact = {
-        id: newFact._id,
-        text: newFact.text,
-        source: newFact.source,
-        category: newFact.category,
-        user_id: newFact.userId,
-        votesInteresting: newFact.votesInteresting,
-        votesMindBlowing: newFact.votesMindBlowing,
-        votesFalse: newFact.votesFalse,
-        created_at: newFact.createdAt,
-        userVote: newFact.userVote || null,
-        profiles: newFact.user
-          ? {
-              username: newFact.user.username,
-              avatar_url: newFact.user.avatarUrl,
-            }
-          : {
-              username: user.username,
-              avatar_url: user.avatarUrl,
-            },
-      };
+      const transformedFact = transformFact(newFact, {
+        username: user.username,
+        avatar_url: user.avatarUrl,
+      });
 
       setFacts((facts) => [transformedFact, ...facts]);
       resetForm();

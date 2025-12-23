@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import API from '../../utils/api';
+import { transformFact } from '../../utils/transformers';
 import './FactVoteButtons.css';
 
 const FactVoteButtons = ({ fact, setFacts, showDeleteOnly }) => {
@@ -23,24 +24,7 @@ const FactVoteButtons = ({ fact, setFacts, showDeleteOnly }) => {
       const updatedFact = response.data.data.fact;
 
       // Transform MongoDB response
-      const transformedFact = {
-        id: updatedFact._id,
-        text: updatedFact.text,
-        source: updatedFact.source,
-        category: updatedFact.category,
-        user_id: updatedFact.userId,
-        votesInteresting: updatedFact.votesInteresting,
-        votesMindBlowing: updatedFact.votesMindBlowing,
-        votesFalse: updatedFact.votesFalse,
-        created_at: updatedFact.createdAt,
-        userVote: updatedFact.userVote || null, // NEW: User's vote from DB
-        profiles: updatedFact.user
-          ? {
-              username: updatedFact.user.username,
-              avatar_url: updatedFact.user.avatarUrl,
-            }
-          : fact.profiles,
-      };
+      const transformedFact = transformFact(updatedFact, fact.profiles);
 
       // Update UI
       setFacts((facts) =>

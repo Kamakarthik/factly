@@ -1,5 +1,6 @@
 import { useFactForm } from '../../hooks/useFactForm';
 import API from '../../utils/api';
+import { transformFact } from '../../utils/transformers';
 import './EditFactModal.css';
 
 export default function EditFactModal({
@@ -38,24 +39,7 @@ export default function EditFactModal({
       const updatedFact = response.data.data.fact;
 
       // Transform to match frontend structure
-      const transformedFact = {
-        id: updatedFact._id,
-        text: updatedFact.text,
-        source: updatedFact.source,
-        category: updatedFact.category,
-        user_id: updatedFact.userId,
-        votesInteresting: updatedFact.votesInteresting,
-        votesMindBlowing: updatedFact.votesMindBlowing,
-        votesFalse: updatedFact.votesFalse,
-        created_at: updatedFact.createdAt,
-        userVote: updatedFact.userVote || fact.userVote || null,
-        profiles: updatedFact.user
-          ? {
-              username: updatedFact.user.username,
-              avatar_url: updatedFact.user.avatarUrl,
-            }
-          : fact.profiles,
-      };
+      const transformedFact = transformFact(updatedFact, fact.profiles);
 
       onUpdate(transformedFact);
       onClose();
