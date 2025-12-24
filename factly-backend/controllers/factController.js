@@ -4,6 +4,10 @@ const Vote = require('../models/voteModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
+const {
+  attachUserVotesToFacts,
+  attachUserVoteToFact,
+} = require('../utils/factUtils');
 
 // Get all facts with filtering, sorting, pagination
 exports.getAllFacts = catchAsync(async (req, res, next) => {
@@ -17,41 +21,14 @@ exports.getAllFacts = catchAsync(async (req, res, next) => {
   // Execute query
   const facts = await features.query;
 
-  // If user is logged in, attach their votes to each fact
-  if (req.user) {
-    const factIds = facts.map((f) => f._id);
-    const userVotes = await Vote.find({
-      userId: req.user.id,
-      factId: { $in: factIds },
-    });
-
-    // Create a map of factId -> voteType
-    const voteMap = {};
-    userVotes.forEach((vote) => {
-      voteMap[vote.factId.toString()] = vote.voteType;
-    });
-
-    // Attach userVote to each fact
-    const factsWithVotes = facts.map((fact) => {
-      const factObj = fact.toObject();
-      factObj.userVote = voteMap[fact._id.toString()] || null;
-      return factObj;
-    });
-
-    return res.status(200).json({
-      status: 'success',
-      results: factsWithVotes.length,
-      data: {
-        facts: factsWithVotes,
-      },
-    });
-  }
+  // Attach user votes if logged in
+  const factsWithVotes = await attachUserVotesToFacts(facts, req.user?.id);
 
   res.status(200).json({
     status: 'success',
-    results: facts.length,
+    results: factsWithVotes.length,
     data: {
-      facts,
+      facts: factsWithVotes,
     },
   });
 });
@@ -65,26 +42,12 @@ exports.getFact = catchAsync(async (req, res, next) => {
   }
 
   // Attach user's vote if logged in
-  if (req.user) {
-    const userVote = await Vote.findOne({
-      userId: req.user.id,
-      factId: fact._id,
-    });
-    const factObj = fact.toObject();
-    factObj.userVote = userVote ? userVote.voteType : null;
-
-    return res.status(200).json({
-      status: 'success',
-      data: {
-        fact: factObj,
-      },
-    });
-  }
+  const factWithVote = await attachUserVoteToFact(fact, req.user?.id);
 
   res.status(200).json({
     status: 'success',
     data: {
-      fact,
+      fact: factWithVote,
     },
   });
 });
@@ -284,38 +247,13 @@ exports.getFactsByCategory = catchAsync(async (req, res, next) => {
   const facts = await features.query;
 
   // Attach user votes if logged in
-  if (req.user) {
-    const factIds = facts.map((f) => f._id);
-    const userVotes = await Vote.find({
-      userId: req.user.id,
-      factId: { $in: factIds },
-    });
-
-    const voteMap = {};
-    userVotes.forEach((vote) => {
-      voteMap[vote.factId.toString()] = vote.voteType;
-    });
-
-    const factsWithVotes = facts.map((fact) => {
-      const factObj = fact.toObject();
-      factObj.userVote = voteMap[fact._id.toString()] || null;
-      return factObj;
-    });
-
-    return res.status(200).json({
-      status: 'success',
-      results: factsWithVotes.length,
-      data: {
-        facts: factsWithVotes,
-      },
-    });
-  }
+  const factsWithVotes = await attachUserVotesToFacts(facts, req.user?.id);
 
   res.status(200).json({
     status: 'success',
-    results: facts.length,
+    results: factsWithVotes.length,
     data: {
-      facts,
+      facts: factsWithVotes,
     },
   });
 });
@@ -331,39 +269,14 @@ exports.getUserFacts = catchAsync(async (req, res, next) => {
   }
   const facts = await Fact.find({ userId }).sort('-createdAt');
 
-  // Attach current user's votes if viewing someone else's profile
-  if (req.user && req.user.id !== userId) {
-    const factIds = facts.map((f) => f._id);
-    const userVotes = await Vote.find({
-      userId: req.user.id,
-      factId: { $in: factIds },
-    });
-
-    const voteMap = {};
-    userVotes.forEach((vote) => {
-      voteMap[vote.factId.toString()] = vote.voteType;
-    });
-
-    const factsWithVotes = facts.map((fact) => {
-      const factObj = fact.toObject();
-      factObj.userVote = voteMap[fact._id.toString()] || null;
-      return factObj;
-    });
-
-    return res.status(200).json({
-      status: 'success',
-      results: factsWithVotes.length,
-      data: {
-        facts: factsWithVotes,
-      },
-    });
-  }
+  // Attach current user's votes (works for own profile and others')
+  const factsWithVotes = await attachUserVotesToFacts(facts, req.user?.id);
 
   res.status(200).json({
     status: 'success',
-    results: facts.length,
+    results: factsWithVotes.length,
     data: {
-      facts,
+      facts: factsWithVotes,
     },
   });
 });
@@ -421,11 +334,7 @@ exports.getVotedFacts = catchAsync(async (req, res, next) => {
   });
 
   // Attach userVote to each fact
-  const factsWithVotes = facts.map((fact) => {
-    const factObj = fact.toObject();
-    factObj.userVote = voteMap[fact._id.toString()] || null;
-    return factObj;
-  });
+  const factsWithVotes = await attachUserVotesToFacts(facts, req.user.id);
 
   res.status(200).json({
     status: 'success',
